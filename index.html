@@ -3,81 +3,71 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A simple Lorem Ipsum placeholder for Adrian Moroz's website.">
+  <meta name="description" content="Explore projects by Adrian Moroz, including an interactive Lithuanian nature atlas and a browser stealth game.">
   <meta name="color-scheme" content="light">
-  <title>Lorem Ipsum | Adrian Moroz</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100svh;
-      display: grid;
-      place-items: center;
-      padding: 32px 20px;
-      color: #222322;
-      background-color: #fbf7ef;
-      background-image: radial-gradient(#ded8cd 1px, transparent 1px);
-      background-size: 22px 22px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    main {
-      width: 100%;
-      max-width: 700px;
-      padding: clamp(24px, 6vw, 56px);
-      background: #fff;
-      border: 2px solid #222322;
-      border-radius: 24px;
-      box-shadow: 8px 8px 0 #222322;
-    }
-    .label {
-      display: inline-block;
-      padding: 7px 12px;
-      background: #ccf3d8;
-      border: 1.5px solid #222322;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-    }
-    h1 {
-      margin: 26px 0 14px;
-      font-size: clamp(2.6rem, 9vw, 4.5rem);
-      line-height: 1.05;
-      letter-spacing: -0.055em;
-    }
-    h1 span { color: #7042bb; }
-    .intro {
-      margin: 0 0 28px;
-      font-size: 1.15rem;
-      line-height: 1.6;
-      color: #50544f;
-    }
-    .copy {
-      padding-top: 22px;
-      border-top: 2px solid #e9e7e1;
-      line-height: 1.85;
-      color: #50544f;
-    }
-    .copy p { margin: 0 0 18px; }
-    .copy p:last-child { margin-bottom: 0; }
-    footer {
-      margin-top: 30px;
-      font-size: 0.85rem;
-      color: #50544f;
-    }
-  </style>
+  <title>Adrian Moroz | Projects</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/carousel.js" defer></script>
 </head>
 <body>
-  <main>
-    <span class="label">HELLO, INTERNET</span>
-    <h1>Lorem ipsum<span>.</span></h1>
-    <p class="intro">A little placeholder while the real website takes shape.</p>
-    <div class="copy">
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-    </div>
-    <footer>Adrian Moroz &middot; Website placeholder</footer>
+  <main class="home">
+    <header class="home__intro">
+      <span class="label">Hello, internet</span>
+      <h1>Adrian Moroz<span>.</span></h1>
+      <p>A home for the things I build on the web. Pick a project below to try it.</p>
+    </header>
+
+    <section class="carousel" aria-labelledby="projects-heading" data-carousel data-interval="7000">
+      <div class="carousel__header">
+        <h2 id="projects-heading">Projects</h2>
+        <button class="carousel__toggle" type="button" data-carousel-rotation hidden>Pause autoplay</button>
+      </div>
+
+      <div class="carousel__viewport" data-carousel-viewport>
+        <div class="carousel__arrows" data-carousel-navigation hidden>
+          <button class="carousel__arrow" type="button" aria-label="Previous project" data-carousel-prev>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m15 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="carousel__arrow" type="button" aria-label="Next project" data-carousel-next>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <article class="project" data-carousel-slide>
+          <img class="project__cover" src="assets/projects/lietuvos-atlasas.webp" width="866" height="499"
+               alt="Illustration of a grey seal on a rock along the Baltic coast.">
+          <div class="project__body">
+            <div>
+              <span class="project__category">Nature atlas</span>
+              <h3 lang="lt">Lietuvos atlasas</h3>
+              <p>Explore the Baltic Sea, Lithuania’s coast, and the Curonian Lagoon through stories and maps.</p>
+            </div>
+            <a class="project__link" href="https://atlasas.adrianmoroz.lt/">Explore the atlas <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+
+        <article class="project" data-carousel-slide>
+          <img class="project__cover" src="assets/projects/the-last-disciple.webp" width="960" height="480"
+               alt="A guard and the player character in a stone courtyard from The Last Disciple.">
+          <div class="project__body">
+            <div>
+              <span class="project__category">Browser game</span>
+              <h3>The Last Disciple</h3>
+              <p>Sneak past guards and make your way to the summit in a martial arts stealth game made for a Halloween jam.</p>
+            </div>
+            <a class="project__link" href="https://spooky.adrianmoroz.lt/">Play The Last Disciple <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+
+      <div class="carousel__picker" role="group" aria-label="Choose a project" data-carousel-picker data-carousel-navigation hidden></div>
+      <p class="visually-hidden" role="status" data-carousel-status></p>
+    </section>
   </main>
 </body>
 </html>
