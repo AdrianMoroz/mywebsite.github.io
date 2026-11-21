@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import { projects, rotationIntervalMs } from '../src/projects.js';
 
 const destinations = [
   ['Lietuvos atlasas', 'Explore the atlas', 'https://atlasas.adrianmoroz.lt/'],
@@ -14,9 +14,30 @@ function projectChoices(page) {
   return page.getByRole('group', { name: 'Choose a project' }).getByRole('button');
 }
 
+async function waitForCarousel(page) {
+  await expect(page.getByRole('button', { name: 'Next project' })).toBeVisible();
+}
+
+async function openCarousel(page) {
+  await page.goto('/');
+  await waitForCarousel(page);
+}
+
 async function rotationInterval(page) {
   return Number(await page.locator('[data-carousel]').getAttribute('data-interval'));
 }
+
+test('serves prerendered project links alongside the built browser module', async ({ request }) => {
+  const response = await request.get('/');
+  await expect(response).toBeOK();
+  const html = await response.text();
+  const script = html.match(/<script\b(?=[^>]*\btype="module")(?=[^>]*\bsrc="([^"]+)")[^>]*>/)?.[1] ?? '';
+
+  expect(script).toMatch(/^\/assets\/[^/]+\.js$/);
+  expect(html).not.toContain('<!--app-html-->');
+  for (const [, , url] of destinations) expect(html).toContain(`href="${url}"`);
+  await expect(await request.get(script)).toBeOK();
+});
 
 test('introduces Adrian and shows both illustrated project links without JavaScript', async ({ browser, baseURL }) => {
   const page = await browser.newPage({ baseURL, javaScriptEnabled: false });
@@ -42,7 +63,7 @@ test('introduces Adrian and shows both illustrated project links without JavaScr
 });
 
 test('wraps with the arrow buttons and supports keyboard navigation and named project selection', async ({ page }) => {
-  await page.goto('/');
+  await openCarousel(page);
   const previous = page.getByRole('button', { name: 'Previous project' });
   const next = page.getByRole('button', { name: 'Next project' });
   const choices = projectChoices(page);
@@ -74,7 +95,7 @@ async function freezeClock(page) {
 async function interactBeforeEnhancement(page, interact) {
   let releaseScript;
   const scriptGate = new Promise((resolve) => { releaseScript = resolve; });
-  await page.route('**/assets/carousel.js', async (route) => {
+  await page.route((url) => /^\/assets\/[^/]+\.js$/.test(url.pathname), async (route) => {
     await scriptGate;
     await route.continue();
   });
@@ -86,11 +107,33 @@ async function interactBeforeEnhancement(page, interact) {
     releaseScript();
   }
   await page.waitForLoadState('load');
+  await waitForCarousel(page);
 }
+
+test('adds React interactions without replacing the prerendered nodes or logging errors', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+
+  const heading = page.getByRole('heading', { level: 1 });
+  let prerenderedHeading;
+  await interactBeforeEnhancement(page, async () => {
+    await expect(heading).toBeVisible();
+    await expect(page.getByRole('article')).toHaveCount(projects.length);
+    prerenderedHeading = await heading.elementHandle();
+  });
+
+  await page.getByRole('button', { name: 'Next project' }).click();
+  await expect(activeProject(page)).toHaveText(projects[1].title);
+  expect(await prerenderedHeading.evaluate((node) => node === document.querySelector('h1'))).toBe(true);
+  expect(errors).toEqual([]);
+});
 
 test('rotates on schedule and lets visitors pause and restart it', async ({ page }) => {
   await freezeClock(page);
-  await page.goto('/');
+  await openCarousel(page);
   const interval = await rotationInterval(page);
   const titles = await projectChoices(page).allTextContents();
   await page.clock.runFor(interval - 1);
@@ -108,25 +151,21 @@ test('rotates on schedule and lets visitors pause and restart it', async ({ page
   await expect(activeProject(page)).toHaveText(titles[2 % titles.length]);
 });
 
-test('uses a new project article and a custom interval without JavaScript changes', async ({ page, baseURL }) => {
-  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-  const newProject = '<article data-carousel-slide><h3>Example project</h3></article>';
-  const fixture = html.replace(/data-interval="\d+"/, 'data-interval="2000"')
-    .replace(/<article\b.*?<\/article>/s, `$&\n${newProject}`);
-
-  await page.route(new URL('/', baseURL).href, (route) => route.fulfill({ contentType: 'text/html', body: fixture }));
-  await freezeClock(page);
-  await page.goto('/');
-  await page.clock.runFor(1_999);
-  await expect(activeProject(page)).toHaveText('Lietuvos atlasas');
-  await page.clock.runFor(1);
-  await expect(activeProject(page)).toHaveText('Example project');
-  await expect(page.getByRole('button', { name: 'Example project' })).toHaveAttribute('aria-current', 'true');
+test('renders the picker, cards, links, and timing from one configuration', async ({ page }) => {
+  await openCarousel(page);
+  const choices = projectChoices(page);
+  await expect(choices).toHaveText(projects.map((project) => project.title));
+  expect(await rotationInterval(page)).toBe(rotationIntervalMs);
+  for (const [index, project] of projects.entries()) {
+    await choices.nth(index).click();
+    await expect(activeProject(page)).toHaveText(project.title);
+    await expect(page.getByRole('link', { name: project.linkLabel })).toHaveAttribute('href', project.url);
+  }
 });
 
 test('does not rotate while a visitor hovers over the project', async ({ page }) => {
   await freezeClock(page);
-  await page.goto('/');
+  await openCarousel(page);
   const interval = await rotationInterval(page);
   await page.getByRole('img', { name: /grey seal/ }).hover();
   await page.clock.runFor(interval + 1);
@@ -137,9 +176,28 @@ test('does not rotate while a visitor hovers over the project', async ({ page })
   await expect(activeProject(page)).toHaveText('The Last Disciple');
 });
 
+test('keeps autoplay running after a quick pointer crossing', async ({ page }) => {
+  await freezeClock(page);
+  await openCarousel(page);
+  const interval = await rotationInterval(page);
+
+  // Keep both inputs in one browser task to reproduce batched state updates.
+  await page.locator('.carousel__viewport').evaluate((viewport) => {
+    for (const type of ['pointerenter', 'pointerleave']) {
+      viewport.dispatchEvent(new PointerEvent(type, { pointerType: 'mouse' }));
+    }
+  });
+
+  await expect(page.getByRole('button', { name: 'Pause autoplay' })).toBeVisible();
+  await page.clock.runFor(interval);
+  await expect(activeProject(page)).toHaveText('The Last Disciple');
+  await page.clock.runFor(interval);
+  await expect(activeProject(page)).toHaveText(projects[2 % projects.length].title);
+});
+
 test('pauses on keyboard focus and does not hide a focused link or restart on blur', async ({ page }) => {
   await freezeClock(page);
-  await page.goto('/');
+  await openCarousel(page);
   const interval = await rotationInterval(page);
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Start autoplay' })).toBeFocused();
@@ -155,6 +213,40 @@ test('pauses on keyboard focus and does not hide a focused link or restart on bl
   await expect(link).not.toBeFocused();
   await page.clock.runFor(interval + 1);
   await expect(activeProject(page)).toHaveText('Lietuvos atlasas');
+});
+
+test('does not hide a link focused immediately after an autoplay tick', async ({ page }) => {
+  await freezeClock(page);
+  await openCarousel(page);
+  const interval = await rotationInterval(page);
+  await page.getByRole('button', { name: 'Pause autoplay' }).click();
+
+  // Focus the displayed link before the timer task yields to asynchronous rendering.
+  await page.evaluate((interval) => {
+    for (const method of ['setTimeout', 'setInterval']) {
+      const schedule = window[method];
+      window[method] = (callback, delay, ...args) => schedule(
+        delay === interval ? (...params) => {
+          callback(...params);
+          const link = document.querySelector('article:not([hidden]) a');
+          link.focus();
+          window.focusedAfterTick = link.href;
+        } : callback,
+        delay,
+        ...args,
+      );
+    }
+  }, interval);
+
+  await page.getByRole('button', { name: 'Start autoplay' }).click();
+  await page.clock.runFor(interval);
+  const target = await page.evaluate(() => window.focusedAfterTick);
+  expect(target).toBeDefined();
+  const link = page.getByRole('article').getByRole('link');
+  await expect(link).toHaveAttribute('href', target);
+  await expect(link).toBeFocused();
+  await page.clock.runFor(interval);
+  await expect(link).toHaveAttribute('href', target);
 });
 
 test('keeps a project link focused if the visitor reached it before the script loaded', async ({ page }) => {
@@ -192,7 +284,7 @@ test('does not rotate under a pointer that was already hovering when the script 
 test('starts paused for reduced motion unless the visitor opts in', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await freezeClock(page);
-  await page.goto('/');
+  await openCarousel(page);
   const interval = await rotationInterval(page);
   await page.clock.runFor(interval + 1);
   await expect(activeProject(page)).toHaveText('Lietuvos atlasas');
@@ -204,7 +296,7 @@ test('starts paused for reduced motion unless the visitor opts in', async ({ pag
 
 test('stops rotation if the motion preference changes to reduced', async ({ page }) => {
   await freezeClock(page);
-  await page.goto('/');
+  await openCarousel(page);
   await expect(page.getByRole('button', { name: 'Pause autoplay' })).toBeVisible();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.getByRole('button', { name: 'Start autoplay' })).toBeVisible();
@@ -213,7 +305,7 @@ test('stops rotation if the motion preference changes to reduced', async ({ page
 });
 
 test('animates slide changes only when reduced motion is not requested', async ({ page }) => {
-  await page.goto('/');
+  await openCarousel(page);
   await page.getByRole('button', { name: 'Next project' }).click();
   const cover = page.getByRole('img', { name: /stone courtyard/ });
   const animationName = () => cover.evaluate((image) => getComputedStyle(image).animationName);
@@ -225,7 +317,7 @@ test('animates slide changes only when reduced motion is not requested', async (
 
 test('keeps both project choices above the fold on a desktop viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openCarousel(page);
   const game = page.getByRole('button', { name: 'The Last Disciple', exact: true });
   const frame = await page.getByRole('main').boundingBox();
   await expect(game).toBeInViewport({ ratio: 1 });
@@ -237,7 +329,7 @@ test.describe('on a narrow touch screen', () => {
 
   test('keeps usable arrow buttons over opposite sides of the image', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
+    await openCarousel(page);
     const previous = page.getByRole('button', { name: 'Previous project' });
     const next = page.getByRole('button', { name: 'Next project' });
     const cover = page.getByRole('img', { name: /grey seal/ });
@@ -263,7 +355,7 @@ test.describe('on a narrow touch screen', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await freezeClock(page);
     await page.route('https://*.adrianmoroz.lt/**', (route) => route.fulfill({ status: 200, body: 'Project destination' }));
-    await page.goto('/');
+    await openCarousel(page);
 
     const atlas = page.getByRole('link', { name: 'Explore the atlas' });
     await atlas.scrollIntoViewIfNeeded();

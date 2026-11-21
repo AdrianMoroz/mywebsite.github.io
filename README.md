@@ -1,30 +1,38 @@
 # Adrian Moroz’s homepage
 
-A static GitHub Pages site for [adrianmoroz.lt](https://adrianmoroz.lt/). The page uses plain HTML, CSS, and JavaScript; it has no build step or runtime dependencies.
+The React homepage for [adrianmoroz.lt](https://adrianmoroz.lt/). Vite builds a static site in `dist/`. The built HTML already contains the intro and the project cards, so both links work before React loads and when JavaScript is disabled. No server-side React runtime is needed on GitHub Pages.
 
 ## Update the projects
 
-- **Add a project:** copy an `<article data-carousel-slide>` in `index.html` and update its `<h3>`, description, link, and image. Put the image in `assets/projects/` and give it accurate alt text and intrinsic `width` and `height`. The carousel uses the title to build the project picker. The order in the HTML is the rotation order.
-- **Change the timing:** edit `data-interval="7000"` on the carousel in `index.html`. The value is in milliseconds (`7000` is 7 seconds). Use `1000` or more.
-- **Change the look or behavior:** edit `assets/site.css` for layout and styles, or `assets/carousel.js` for navigation and autoplay.
+- **Add or reorder projects:** edit the `projects` array in `src/projects.js`. Give each project a unique `id`, title, category, description, link label, URL, and cover image. Put images in `public/assets/projects/`, with accurate alt text and intrinsic width and height.
+- **Change autoplay:** edit `rotationIntervalMs` in the same file. The default is `7000` (7 seconds); use a whole number of at least `1000` milliseconds.
+- **Change the page:** `src/App.jsx` owns the intro, `src/ProjectCarousel.jsx` owns the cards and controls, `src/useCarousel.js` owns the carousel behavior, and `src/site.css` owns the styling.
 
-Visitors can browse with the arrows or pick a project by name. Hovering over or holding a finger on the featured project temporarily suspends autoplay. Keyboard focus or manual navigation pauses it until the visitor selects **Start autoplay**. It starts paused and transitions are disabled when the visitor prefers reduced motion. Without JavaScript, every project and link is still visible.
+Hovering over or holding a finger on a card temporarily suspends autoplay. Keyboard focus or manual navigation pauses it until the visitor selects **Start autoplay**. It starts paused and skips transitions when the visitor prefers reduced motion.
 
 ## Preview and test
 
-From the repository root, run `python3 -m http.server 8000 --bind 127.0.0.1` and open `http://127.0.0.1:8000/`.
-
-The optional Playwright tests use Node.js and Python 3:
+Use Node.js 22.12 or newer (the workflow uses Node.js 24).
 
 ```sh
 npm ci
+npm run dev       # Development server
+npm run build     # Build and prerender dist/
+npm run preview   # Serve the production build locally
+```
+
+The Playwright suite builds and serves the production site before testing it:
+
+```sh
 npx playwright install chromium
 npm test
 ```
+
+## Publish on GitHub Pages
+
+In the repository’s **Settings → Pages**, use **GitHub Actions** as the source and keep `adrianmoroz.lt` as the custom domain. The workflow in `.github/workflows/pages.yml` builds pull requests and deploys `dist/` from `main`. No change to DNS or either project subdomain is needed. The existing root `CNAME` is preserved; the custom domain for an Actions deployment is managed in Pages settings.
 
 ## Image sources
 
 - Lietuvos atlasas: the [atlas’s own seal illustration](https://github.com/AdrianMoroz/Lietuvos-Atlasas-Pilot/blob/45dd44f711e00cbd1acf5ae1368f55bcab2d60d5/src/assets/illustrations/seal-hero.png).
 - The Last Disciple: a screenshot of the first playable courtyard from [the browser game](https://spooky.adrianmoroz.lt/), cropped to remove the interface.
-
-The homepage serves both images as local WebP files.

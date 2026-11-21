@@ -6,68 +6,11 @@
   <meta name="description" content="Explore projects by Adrian Moroz, including an interactive Lithuanian nature atlas and a browser stealth game.">
   <meta name="color-scheme" content="light">
   <title>Adrian Moroz | Projects</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/site.css">
-  <script src="assets/carousel.js" defer></script>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/site.css">
 </head>
 <body>
-  <main class="home">
-    <header class="home__intro">
-      <span class="label">Hello, internet</span>
-      <h1>Adrian Moroz<span>.</span></h1>
-      <p>A home for the things I build on the web. Pick a project below to try it.</p>
-    </header>
-
-    <section class="carousel" aria-labelledby="projects-heading" data-carousel data-interval="7000">
-      <div class="carousel__header">
-        <h2 id="projects-heading">Projects</h2>
-        <button class="carousel__toggle" type="button" data-carousel-rotation hidden>Pause autoplay</button>
-      </div>
-
-      <div class="carousel__viewport" data-carousel-viewport>
-        <div class="carousel__arrows" data-carousel-navigation hidden>
-          <button class="carousel__arrow" type="button" aria-label="Previous project" data-carousel-prev>
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="m15 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="carousel__arrow" type="button" aria-label="Next project" data-carousel-next>
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <article class="project" data-carousel-slide>
-          <img class="project__cover" src="assets/projects/lietuvos-atlasas.webp" width="866" height="499"
-               alt="Illustration of a grey seal on a rock along the Baltic coast.">
-          <div class="project__body">
-            <div>
-              <span class="project__category">Nature atlas</span>
-              <h3 lang="lt">Lietuvos atlasas</h3>
-              <p>Explore the Baltic Sea, Lithuania’s coast, and the Curonian Lagoon through stories and maps.</p>
-            </div>
-            <a class="project__link" href="https://atlasas.adrianmoroz.lt/">Explore the atlas <span aria-hidden="true">↗</span></a>
-          </div>
-        </article>
-
-        <article class="project" data-carousel-slide>
-          <img class="project__cover" src="assets/projects/the-last-disciple.webp" width="960" height="480"
-               alt="A guard and the player character in a stone courtyard from The Last Disciple.">
-          <div class="project__body">
-            <div>
-              <span class="project__category">Browser game</span>
-              <h3>The Last Disciple</h3>
-              <p>Sneak past guards and make your way to the summit in a martial arts stealth game made for a Halloween jam.</p>
-            </div>
-            <a class="project__link" href="https://spooky.adrianmoroz.lt/">Play The Last Disciple <span aria-hidden="true">↗</span></a>
-          </div>
-        </article>
-      </div>
-
-      <div class="carousel__picker" role="group" aria-label="Choose a project" data-carousel-picker data-carousel-navigation hidden></div>
-      <p class="visually-hidden" role="status" data-carousel-status></p>
-    </section>
-  </main>
+  <main id="app" class="home"><!--app-html--></main>
+  <script type="module" src="/src/entry-client.jsx"></script>
 </body>
 </html>
