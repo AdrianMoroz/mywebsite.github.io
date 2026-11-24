@@ -19,7 +19,7 @@ body {
   min-block-size: 100svh;
   display: grid;
   place-items: center;
-  padding: clamp(1rem, 4vw, 1.75rem);
+  padding: 1rem clamp(1rem, 4vw, 1.75rem);
   background: var(--paper) radial-gradient(#ded8cd 1px, transparent 1px) 0 0 / 22px 22px;
 }
 
