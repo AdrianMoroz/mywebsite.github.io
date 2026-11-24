@@ -103,7 +103,7 @@ body {
   pointer-events: none;
 }
 
-:where(.carousel button, .project__link) {
+:where(.carousel button, .project__link, .home__support-link) {
   min-block-size: 44px;
   color: inherit;
   font: inherit;
@@ -124,7 +124,8 @@ body {
 }
 
 .carousel__arrow:hover,
-.project__link:hover { background: #e4f8e9; }
+.project__link:hover,
+.home__support-link:hover { background: #e4f8e9; }
 
 .carousel__toggle {
   padding: 0.45rem;
@@ -181,7 +182,8 @@ body {
 
 .project p { max-inline-size: 55ch; }
 
-.project__link {
+.project__link,
+.home__support-link {
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
@@ -191,6 +193,8 @@ body {
   border-radius: 9px;
   text-decoration: none;
 }
+
+.home__support-link { margin-block-start: 1rem; }
 
 .carousel__picker:not([hidden]) {
   display: flex;
@@ -214,7 +218,8 @@ body {
   box-shadow: inset 0 0 0 1px var(--ink);
 }
 
-.carousel :focus-visible {
+.carousel :focus-visible,
+.home__support-link:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
