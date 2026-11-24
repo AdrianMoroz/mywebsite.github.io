@@ -200,6 +200,8 @@ test('pauses on keyboard focus and does not hide a focused link or restart on bl
   await openCarousel(page);
   const interval = await rotationInterval(page);
   await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Buy me a coffee', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Start autoplay' })).toBeFocused();
 
   for (let index = 0; index < 3; index++) await page.keyboard.press('Tab');
@@ -255,6 +257,8 @@ test('keeps a project link focused if the visitor reached it before the script l
 
   await interactBeforeEnhancement(page, async () => {
     await expect(game).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Buy me a coffee', exact: true })).toBeFocused();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await expect(game).toBeFocused();
